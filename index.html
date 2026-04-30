@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SIM</title>
+    <link rel="stylesheet" href="./sleep.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar__inner">
+        <p class="topbar__subtitle">
+          Choose inputs (calendar + options) → get a sleep plan (with explainable scoring + references).
+        </p>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="card">
+        <h2 class="card__title">Inputs</h2>
+        <div class="row row--spread" style="align-items:center">
+          <div class="row">
+            <button id="loadExampleBtn" class="btn btn--secondary" type="button">Load example</button>
+            <button id="runBtn" class="btn btn--primary" type="button">Recommend</button>
+          </div>
+          <div id="status" class="status status--big" aria-live="polite"></div>
+        </div>
+        <div class="progressWrap" style="margin-top:12px">
+          <div
+            id="progressBar"
+            class="progressBar"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+          ></div>
+          <div id="progressText" class="progressText" aria-live="polite"></div>
+        </div>
+
+        <div class="grid2" style="margin-top:12px">
+          <label class="field">
+            <div class="field__label">Plan date</div>
+            <input id="planDate" type="date" />
+            <div id="planCalendar" class="calendar" style="margin-top:10px">
+              <div class="calendar__top">
+                <button id="calPrevBtn" class="btn btn--secondary" type="button" aria-label="Previous month">◀</button>
+                <div id="calMonthLabel" class="calendar__month"></div>
+                <button id="calNextBtn" class="btn btn--secondary" type="button" aria-label="Next month">▶</button>
+              </div>
+              <div id="calGrid" class="calendar__grid" role="grid"></div>
+            </div>
+          </label>
+          <label class="field">
+            <div class="field__label">Sleep timing preference</div>
+            <select id="orientation">
+              <option value="balanced" selected>Balanced (no strong push)</option>
+              <option value="early">Earlier sleep/wake</option>
+              <option value="late">Later sleep/wake</option>
+            </select>
+            <div class="muted" style="margin-top:6px; font-size:12px">
+              Balanced keeps timing neutral, Earlier nudges bedtime/wake earlier, and Later allows later timing.
+            </div>
+          </label>
+        </div>
+
+        <div class="grid2" style="margin-top:12px">
+          <label class="field">
+            <div class="field__label">Age (years)</div>
+            <input id="ageYears" type="number" min="0" max="120" step="1" placeholder="e.g. 19" />
+          </label>
+          <label class="field">
+            <div class="field__label">Gender</div>
+            <select id="gender">
+              <option value="unspecified" selected>Prefer not to say</option>
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+              <option value="nonbinary">Non-binary</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="grid2" style="margin-top:12px">
+          <label class="field">
+            <div class="field__label">Default wake time</div>
+            <div class="timeRow">
+              <select id="wakeHour"></select>
+              <span class="timeSep">:</span>
+              <select id="wakeMinute"></select>
+              <span class="timeSep muted">(seconds ignored)</span>
+              <select id="wakeSecond" class="timeHidden"></select>
+            </div>
+          </label>
+          <label class="field">
+            <div class="field__label">Prep buffer before first hard task (minutes)</div>
+            <input id="prepBufferMinutes" type="number" min="0" max="240" step="5" value="60" />
+          </label>
+        </div>
+
+        <div class="grid2" style="margin-top:12px">
+          <label class="field">
+            <div class="field__label">Preferred bedtime (optional)</div>
+            <div class="timeRow">
+              <select id="bedHour"></select>
+              <span class="timeSep">:</span>
+              <select id="bedMinute"></select>
+              <span class="timeSep muted">(seconds ignored)</span>
+              <select id="bedSecond" class="timeHidden"></select>
+            </div>
+          </label>
+          <label class="field">
+            <div class="field__label">Self-reported sleep need (hours, optional)</div>
+            <input id="selfSleepNeed" type="number" min="4" max="16" step="0.25" placeholder="e.g. 8" />
+          </label>
+        </div>
+
+        <div class="divider" style="margin-top:16px"></div>
+
+        <h3 class="sectionTitle">Schedules</h3>
+        <div class="row" style="margin-top:10px">
+          <button id="addScheduleBtn" class="btn btn--secondary" type="button">Add schedule</button>
+          <div id="taskHint" class="status" aria-live="polite"></div>
+        </div>
+
+        <section id="taskWizard" class="wizard" style="margin-top:12px; display:none">
+          <div id="taskStepWhen" class="wizardStep">
+            <h4 class="wizardTitle">When?</h4>
+            <div class="grid2" style="margin-top:10px">
+              <label class="field">
+                <div class="field__label">Task kind</div>
+                <select id="taskKind">
+                  <option value="fixed" selected>Regular (fixed)</option>
+                  <option value="once">Once-only</option>
+                  <option value="deadline">Deadline (no fixed time)</option>
+                  <option value="nap">Nap (planned)</option>
+                </select>
+              </label>
+              <div></div>
+            </div>
+
+            <div id="fixedFields" style="margin-top:10px">
+          <div class="grid2">
+            <label class="field">
+              <div class="field__label">Period</div>
+              <select id="period">
+                <option value="daily">Daily</option>
+                <option value="weekly" selected>Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </label>
+            <label class="field">
+              <div class="field__label">Hard constraint?</div>
+              <select id="isHard">
+                <option value="true" selected>Yes (must not overlap sleep)</option>
+                <option value="false">No (soft)</option>
+              </select>
+            </label>
+          </div>
+
+          <div id="weeklyOptions" style="margin-top:10px">
+            <div class="field__label">Which weekdays?</div>
+            <div class="chipRow" id="weekdayChips"></div>
+          </div>
+
+          <div id="monthlyOptions" style="margin-top:10px; display:none">
+            <div class="grid2">
+              <label class="field">
+                <div class="field__label">Day of month</div>
+                <select id="dayOfMonth"></select>
+              </label>
+              <div></div>
+            </div>
+          </div>
+
+          <div id="yearlyOptions" style="margin-top:10px; display:none">
+            <div class="grid2">
+              <label class="field">
+                <div class="field__label">Month</div>
+                <select id="monthOfYear"></select>
+              </label>
+              <label class="field">
+                <div class="field__label">Day</div>
+                <select id="dayOfYear"></select>
+              </label>
+            </div>
+          </div>
+
+          <div class="grid2" style="margin-top:10px">
+            <label class="field">
+              <div class="field__label">Start time</div>
+              <div class="timeRow">
+                <select id="fixedStartHour"></select><span class="timeSep">:</span><select id="fixedStartMinute"></select>
+                <span class="timeSep muted">:</span><select id="fixedStartSecond"></select>
+              </div>
+            </label>
+            <label class="field">
+              <div class="field__label">End time</div>
+              <div class="timeRow">
+                <select id="fixedEndHour"></select><span class="timeSep">:</span><select id="fixedEndMinute"></select>
+                <span class="timeSep muted">:</span><select id="fixedEndSecond"></select>
+              </div>
+            </label>
+          </div>
+            </div>
+
+            <div id="onceFields" style="margin-top:10px; display:none">
+          <div class="grid2">
+            <label class="field">
+              <div class="field__label">Date</div>
+              <input id="onceDate" type="date" />
+            </label>
+            <label class="field">
+              <div class="field__label">Hard constraint?</div>
+              <select id="onceIsHard">
+                <option value="true" selected>Yes</option>
+                <option value="false">No</option>
+              </select>
+            </label>
+          </div>
+          <div class="grid2" style="margin-top:10px">
+            <label class="field">
+              <div class="field__label">Start time</div>
+              <div class="timeRow">
+                <select id="onceStartHour"></select><span class="timeSep">:</span><select id="onceStartMinute"></select>
+                <span class="timeSep muted">:</span><select id="onceStartSecond"></select>
+              </div>
+            </label>
+            <label class="field">
+              <div class="field__label">End time</div>
+              <div class="timeRow">
+                <select id="onceEndHour"></select><span class="timeSep">:</span><select id="onceEndMinute"></select>
+                <span class="timeSep muted">:</span><select id="onceEndSecond"></select>
+              </div>
+            </label>
+          </div>
+            </div>
+
+            <div id="deadlineFields" style="margin-top:10px; display:none">
+          <div class="grid2">
+            <label class="field">
+              <div class="field__label">Due date</div>
+              <input id="dueDate" type="date" />
+            </label>
+            <label class="field">
+              <div class="field__label">Due time</div>
+              <div class="timeRow">
+                <select id="dueHour"></select><span class="timeSep">:</span><select id="dueMinute"></select>
+                <span class="timeSep muted">:</span><select id="dueSecond"></select>
+              </div>
+            </label>
+          </div>
+          <div class="grid2" style="margin-top:10px">
+            <label class="field">
+              <div class="field__label">Estimated minutes (optional)</div>
+              <input id="deadlineEstimate" type="number" min="0" max="10080" step="15" placeholder="e.g. 180" />
+            </label>
+            <label class="field">
+              <div class="field__label">Urgency (0–1, optional)</div>
+              <input id="deadlineUrgency" type="number" min="0" max="1" step="0.05" placeholder="e.g. 0.7" />
+            </label>
+          </div>
+            </div>
+
+            <div class="row" style="margin-top:12px">
+              <button id="cancelScheduleBtn" class="btn btn--secondary" type="button">Cancel</button>
+              <button id="whenNextBtn" class="btn btn--primary" type="button">Next</button>
+            </div>
+          </div>
+
+          <div id="taskStepInfo" class="wizardStep" style="display:none">
+            <h4 class="wizardTitle">Input information about the event</h4>
+            <label class="field" style="margin-top:10px">
+              <div class="field__label">Title (free text; AI can interpret later)</div>
+              <input id="taskTitle" type="text" placeholder="e.g. Weekly meeting / assignment / gym" />
+            </label>
+            <div class="row" style="margin-top:12px">
+              <button id="infoBackBtn" class="btn btn--secondary" type="button">Back</button>
+              <button id="saveScheduleBtn" class="btn btn--primary" type="button">Save schedule</button>
+            </div>
+          </div>
+        </section>
+
+        <div style="margin-top:12px">
+          <div class="field__label">Tasks added</div>
+          <div id="taskList" class="taskList"></div>
+        </div>
+
+        <details class="advanced" style="margin-top:14px">
+          <summary class="advancedSummary">Advanced: raw input JSON</summary>
+          <label class="field" style="margin-top:10px">
+            <div class="field__label">Generated JSON (you can edit, but the form won’t auto-update)</div>
+            <textarea id="inputJson" rows="14" spellcheck="false"></textarea>
+          </label>
+        </details>
+
+        <details class="advanced" style="margin-top:14px">
+          <summary class="advancedSummary">Evidence / References</summary>
+          <div class="refsNote">
+            The planner uses age-based sleep-duration consensus guidance and sleep-regularity evidence.
+          </div>
+          <ul class="refsList">
+            <li>
+              <strong>AASM Adult Sleep Consensus (2015)</strong> · Journal of Clinical Sleep Medicine ·
+              DOI <code>10.5664/jcsm.4758</code> ·
+              <a href="https://jcsm.aasm.org/doi/full/10.5664/jcsm.4758" target="_blank" rel="noreferrer">source</a>
+            </li>
+            <li>
+              <strong>AASM Pediatric Sleep Consensus (2016)</strong> · Journal of Clinical Sleep Medicine ·
+              DOI <code>10.5664/jcsm.5866</code> ·
+              <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4877308/" target="_blank" rel="noreferrer">source</a>
+            </li>
+            <li>
+              <strong>Sleep Regularity Index study (2017)</strong> · Scientific Reports ·
+              DOI <code>10.1038/s41598-017-03171-4</code> ·
+              <a href="https://www.nature.com/articles/s41598-017-03171-4" target="_blank" rel="noreferrer">source</a>
+            </li>
+          </ul>
+        </details>
+      </section>
+
+      <section class="card" style="display:none">
+        <h2 class="card__title">Output (JSON)</h2>
+        <div class="row">
+          <button id="downloadJsonBtn" class="btn btn--secondary" type="button" disabled>Download JSON</button>
+          <button id="copyJsonBtn" class="btn btn--secondary" type="button" disabled>Copy JSON</button>
+        </div>
+        <label class="field" style="margin-top:12px">
+          <div class="field__label">Result</div>
+          <textarea id="outputJson" rows="14" spellcheck="false" readonly></textarea>
+        </label>
+      </section>
+
+      <section class="card">
+        <h2 class="card__title">Output (HTML report)</h2>
+        <div class="row">
+          <button id="downloadHtmlBtn" class="btn btn--secondary" type="button" disabled>Download HTML</button>
+        </div>
+        <div class="wakePanel" style="margin-top:10px">
+          <div class="field__label">Wake stimulation</div>
+          <div class="row">
+            <label class="field" style="min-width:220px; margin:0">
+              <div class="field__label" style="margin-bottom:4px">Vibration strength</div>
+              <select id="vibrationStrength">
+                <option value="gentle">Gentle</option>
+                <option value="medium" selected>Medium</option>
+                <option value="strong">Strong</option>
+              </select>
+            </label>
+            <button id="testWakeBtn" class="btn btn--secondary" type="button">Test vibration</button>
+            <button id="stopWakeBtn" class="btn btn--secondary" type="button">Stop</button>
+            <div id="wakeHint" class="status" aria-live="polite"></div>
+          </div>
+        </div>
+        <div id="report" class="report" style="margin-top:12px"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer__inner">
+        <p class="muted">
+          SIM is a planning prototype using evidence-based duration ranges + an explainable optimizer. It’s not a medical device.
+        </p>
+      </div>
+    </footer>
+
+    <script defer src="./app.js"></script>
+  </body>
+</html>
+
