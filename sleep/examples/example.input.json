@@ -1,0 +1,52 @@
+{
+  "planDate": "2026-05-01",
+  "profile": {
+    "ageYears": 19,
+    "gender": "female"
+  },
+  "habit": {
+    "preferredBedTime": "23:30",
+    "selfReportedSleepNeedHours": 8.0
+  },
+  "preferences": {
+    "defaultWakeTime": "07:00",
+    "prepBufferMinutes": 60,
+    "orientation": "balanced",
+    "searchStepMinutes": 15,
+    "searchRadiusMinutes": 180
+  },
+  "tasks": [
+    {
+      "type": "fixed",
+      "id": "weekly_meeting",
+      "title": "Weekly team meeting",
+      "weekdays": [5],
+      "startTime": "09:00",
+      "endTime": "10:00",
+      "isHard": true,
+      "priority": 0.9
+    },
+    {
+      "type": "once",
+      "id": "dentist",
+      "title": "Dentist appointment",
+      "start": "2026-05-01T14:30:00",
+      "end": "2026-05-01T15:30:00",
+      "isHard": true
+    },
+    {
+      "type": "deadline",
+      "id": "assignment",
+      "title": "Essay deadline",
+      "due": "2026-05-01T23:59:00",
+      "estimatedMinutes": 180,
+      "urgency": 0.7
+    }
+  ],
+  "sleepHistory": [
+    { "start": "2026-04-28T00:40:00", "end": "2026-04-28T08:15:00" },
+    { "start": "2026-04-29T01:10:00", "end": "2026-04-29T08:00:00" },
+    { "start": "2026-04-30T00:55:00", "end": "2026-04-30T07:40:00" }
+  ]
+}
+

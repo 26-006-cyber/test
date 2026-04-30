@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sleep-planner-output.schema.json",
+  "title": "Sleep Planner Output",
+  "type": "object",
+  "required": ["version", "planDate", "recommended", "references"],
+  "additionalProperties": true,
+  "properties": {
+    "version": { "type": "string" },
+    "planDate": { "type": "string" },
+    "recommended": {
+      "type": "object",
+      "required": ["sleepStartHHMM", "sleepEndHHMM", "sleepDurationMinutes", "orientation"],
+      "properties": {
+        "sleepStartLocal": { "type": "string" },
+        "sleepEndLocal": { "type": "string" },
+        "sleepStartHHMM": { "type": "string" },
+        "sleepEndHHMM": { "type": "string" },
+        "sleepDurationMinutes": { "type": "number" },
+        "sleepDurationHours": { "type": "number" },
+        "orientation": { "type": "string" }
+      }
+    },
+    "explainability": {
+      "type": "object",
+      "properties": {
+        "optimization": {
+          "type": "object",
+          "properties": {
+            "stepMinutes": { "type": "number" },
+            "candidatesEvaluated": { "type": "number" },
+            "bestScore": { "type": "number" }
+          }
+        },
+        "notes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["key", "title", "year"],
+        "properties": {
+          "key": { "type": "string" },
+          "title": { "type": "string" },
+          "year": { "type": "number" },
+          "venue": { "type": "string" },
+          "doi": { "type": "string" },
+          "url": { "type": "string" }
+        }
+      }
+    }
+  }
+}
+
